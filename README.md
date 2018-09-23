@@ -2,7 +2,9 @@
 
 This is the Windows SDK of adjust™. You can read more about adjust™ at [adjust.com](http://adjust.com).
 
-## Table of contents
+---
+
+### Quick Start
 
 * [Example app](#example-app)
 * [Basic integration](#basic-integration)
@@ -11,36 +13,51 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
     * [Update Adjust settings](#update-adjust-settings)
         * [App Token & Environment](#app-token-and-environment)
         * [Adjust Logging](#adjust-logging)
+    * [SDK signature](#sdk-signature)
     * [Build your app](#build-your-app)
-* [Additional features](#additional-features)
-    * [Event tracking](#custom-events-tracking)
-        * [Revenue tracking](#revenue-tracking)
-        * [Revenue deduplication](#revenue-deduplication)
-        * [Callback parameters](#callback-parameters)
-        * [Partner parameters](#partner-params)
-        * [Callback identifier](#callback-id)
-    * [Session parameters](#session-params)
-        * [Session callback parameters](#session-callback-parameters)
-        * [Session partner parameters](#session-partner-parameters)
-        * [Delay start](#delay-start)
+      
+### Deep linking
+
+* [Deep linking](#deeplinking)
+  * [Standard deep linking scenario](#deeplinking-standard)
+  * [Deferred deep linking scenario](#deeplinking-deferred)
+  * [Reattribution via deep links](#deeplinking-reattribution)
+   
+### Event Tracking
+
+* [Event tracking](#custom-events-tracking)
+  * [Revenue tracking](#revenue-tracking)
+  * [Revenue deduplication](#revenue-deduplication)
+          
+### Custom Parameters
+
+* [Event Parameters](#event-parameters)
+  * [Callback parameters](#callback-parameters)
+  * [Partner parameters](#partner-params)   
+* [Session parameters](#session-params)
+  * [Session callback parameters](#session-callback-parameters)
+  * [Session partner parameters](#session-partner-parameters)
+* [Delay start](#delay-start)
+
+### Additional Features
+        
+   * [Push token (Uninstall/Reinstall tracking)](#push-token)
     * [Attribution callback](#attribution-callback)
     * [Session and event callbacks](#session-event-callbacks)
+    * [Callback identifier](#callback-id)
     * [Disable tracking](#disable-tracking)
     * [Offline mode](#offline-mode)
     * [Event buffering](#event-buffering)
     * [GDPR right to be forgotten](#gdpr-forget-me)
-    * [SDK signature](#sdk-signature)
+
     * [Background tracking](#background-tracking)
     * [Device IDs](#device-ids)
         * [Windows advertising identifier](#di-win-adid)
         * [Adjust device identifier](#di-adid)
     * [User attribution](#user-attribution)
-    * [Push token](#push-token)
+
     * [Pre-installed trackers](#pre-installed-trackers)
-    * [Deep linking](#deeplinking)
-        * [Standard deep linking scenario](#deeplinking-standard)
-        * [Deferred deep linking scenario](#deeplinking-deferred)
-        * [Reattribution via deep links](#deeplinking-reattribution)
+
 * [License](#license)
 
 ## <a id="example-app"></a>Example app
