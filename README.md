@@ -42,23 +42,21 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
 ### Additional Features
         
    * [Push token (Uninstall/Reinstall tracking)](#push-token)
-    * [Attribution callback](#attribution-callback)
-    * [Session and event callbacks](#session-event-callbacks)
-    * [Callback identifier](#callback-id)
-    * [Disable tracking](#disable-tracking)
-    * [Offline mode](#offline-mode)
-    * [Event buffering](#event-buffering)
-    * [GDPR right to be forgotten](#gdpr-forget-me)
+   * [Attribution callback](#attribution-callback)
+   * [User attribution](#user-attribution)
+   * [Session and event callbacks](#session-event-callbacks)
+   * [Callback identifier](#callback-id)
+   * [Device IDs](#device-ids)
+     * [Windows advertising identifier](#di-win-adid)
+     * [Adjust device identifier](#di-adid)
+   * [Pre-installed trackers](#pre-installed-trackers)
+   * [Background tracking](#background-tracking)
+   * [Event buffering](#event-buffering)
+   * [Offline mode](#offline-mode)
+   * [Disable tracking](#disable-tracking)
+   * [GDPR right to be forgotten](#gdpr-forget-me)  
 
-    * [Background tracking](#background-tracking)
-    * [Device IDs](#device-ids)
-        * [Windows advertising identifier](#di-win-adid)
-        * [Adjust device identifier](#di-adid)
-    * [User attribution](#user-attribution)
-
-    * [Pre-installed trackers](#pre-installed-trackers)
-
-* [License](#license)
+### [License](#license)
 
 ## <a id="example-app"></a>Example app
 
