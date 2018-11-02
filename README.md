@@ -157,6 +157,23 @@ logLevel: LogLevel.Assert   // disable errors as well
 logLevel: LogLevel.Suppress // disable all logs
 ```
 
+### <a id="sdk-signature"></a> SDK signature
+
+An account manager must activate the Adjust SDK signature. Contact Adjust support (support@adjust.com) if you are interested in using this feature.
+
+If the SDK signature has already been enabled on your account and you have access to App Secrets in your Adjust Dashboard, please use the method below to integrate the SDK signature into your app.
+
+An App Secret is set by calling `setAppSecret` on your `AdjustConfig` instance:
+
+```cs
+var config = new AdjustConfig(appToken, environment,
+   msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
+
+config.SetAppSecret(secretId, info1, info2, info3, info4);
+
+Adjust.ApplicationLaunching(config);
+```
+
 ### <a id="build-your-app"></a>Build and debug your app
 
 From the menu, select `DEBUG → Start Debugging`. After the app launches, you should see the Adjust debug logs in the Output view. Every Adjust-specific log starts with the ```[Adjust]``` tag, like in the picture below:
@@ -476,23 +493,6 @@ Adjust.GdprForgetMe();
 ```
 
 Upon receiving this information, Adjust will erase the user's data and the Adjust SDK will stop tracking the user. No requests from this device will be sent to Adjust in the future.
-
-### <a id="sdk-signature"></a> SDK signature
-
-An account manager must activate the Adjust SDK signature. Contact Adjust support (support@adjust.com) if you are interested in using this feature.
-
-If the SDK signature has already been enabled on your account and you have access to App Secrets in your Adjust Dashboard, please use the method below to integrate the SDK signature into your app.
-
-An App Secret is set by calling `setAppSecret` on your `AdjustConfig` instance:
-
-```cs
-var config = new AdjustConfig(appToken, environment,
-   msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
-
-config.SetAppSecret(secretId, info1, info2, info3, info4);
-
-Adjust.ApplicationLaunching(config);
-```
 
 ### <a id="background-tracking"></a>Background tracking
 
