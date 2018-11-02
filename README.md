@@ -468,6 +468,16 @@ In this case, the Adjust SDK will not send the initial install session or any ev
 
 **The maximum delay start time of the Adjust SDK is 10 seconds**.
 
+## <a id="additional-feature"></a>Additional features
+
+### <a id="push-token"></a>Push token (Uninstall/Reinstall tracking)
+
+To send us the push notification token, add the following call to Adjust once you have obtained your token or whenever its value is changed:
+
+```cs
+Adjust.SetPushToken(pushNotificationsToken);
+```
+
 ### <a id="attribution-callback"></a>Attribution callback
 
 You can register a delegate function to be notified of tracker attribution changes. Due to the different sources considered for attribution, this information cannot be provided synchronously. The simplest way is to create a single anonymous delegate function.
@@ -510,6 +520,18 @@ The delegate function will be called when the SDK receives the final install att
 - `string Adid` the Adjust device identifier.
 
 If any value is unavailable, it will default to `null`.
+
+### <a id="user-attribution"></a>User attribution
+
+This callback is triggered as described in the [attribution callback section](#attribution-callback). It provides information about new attributions whenever there is a change. In case you want to access information about your user's current attribution whenever you need it, you can make a call to the following method of the `Adjust` instance:
+
+```cs
+AdjustAttribution attribution = Adjust.GetAttribution();
+```
+
+**Note**: You can only make this call in the Adjust SDK v4.12.0 and above.
+
+**Note**: Information about a current attribution is available after app installation has been tracked by the Adjust backend and an attribution callback has been triggered. From that moment on, the Adjust SDK has information about your user's attribution status and you can access it with this method. So, **it is not possible** to access a user's attribution value before the SDK has been initialized and an attribution callback has been triggered.
 
 ### <a id="session-event-callbacks"></a>Session and event callbacks
 
@@ -577,66 +599,6 @@ adjustEvent.CallbackId = "Your-Custom-Id";
 Adjust.TrackEvent(adjustEvent);
 ```
 
-### <a id="disable-tracking"></a>Disable tracking
-
-You can disable the Adjust SDK from tracking any activities of the current device by calling `setEnabled` with the parameter set to `false`. **This setting is remembered between sessions**.
-
-```cs
-Adjust.SetEnabled(false);
-```
-
-You can check if the Adjust SDK is currently enabled by calling the `isEnabled` function. It is always possible to activate the Adjust SDK by invoking `SetEnabled` with the `enabled` parameter set to `true`.
-
-### <a id="offline-mode"></a>Offline mode
-
-You can put the Adjust SDK in offline mode to suspend transmission to our servers, while retaining tracked data to be sent later. While in offline mode, all information is saved in a file, so be careful not to trigger too many events while in offline mode.
-
-You can activate offline mode by calling `SetOfflineMode` with the parameter `true`.
-
-```cs
-Adjust.SetOfflineMode(true);
-```
-
-Conversely, you can deactivate offline mode by calling `SetOfflineMode` with `false`. When the Adjust SDK is put back in online mode, all saved information is sent to our servers with the correct time information.
-
-Unlike disabling tracking, this setting is **not remembered** between sessions. This means that the SDK is in online mode whenever it is started, even if the app was terminated in offline mode.
-
-### <a id="event-buffering"></a>Event buffering
-
-If your app makes heavy use of event tracking, you might want to delay some HTTP requests in order to send them in one batch every minute. You can enable event buffering with your `AdjustConfig` instance:
-
-```cs
-var config = new AdjustConfig(appToken, environment,
-    msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
-
-config.EventBufferingEnabled = true;
-
-Adjust.ApplicationLaunching(config);
-```
-
-### <a id="gdpr-forget-me"></a>GDPR right to be forgotten
-
-In accordance with article 17 of the EU's General Data Protection Regulation (GDPR), you can notify Adjust when a user has exercised their right to be forgotten. Calling the following method will instruct the Adjust SDK to communicate the user's choice to be forgotten to the Adjust backend:
-
-```cs
-Adjust.GdprForgetMe();
-```
-
-Upon receiving this information, Adjust will erase the user's data and the Adjust SDK will stop tracking the user. No requests from this device will be sent to Adjust in the future.
-
-### <a id="background-tracking"></a>Background tracking
-
-The default behavior of the Adjust SDK is to pause sending HTTP requests while the app is in the background. You can change this in your `AdjustConfig` instance:
-
-```cs
-var config = new AdjustConfig(appToken, environment,
-    msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
-
-config.SendInBackground = true;
-
-Adjust.ApplicationLaunching(config);
-```
-
 ### <a id="device-ids"></a>Device IDs
 
 The Adjust SDK offers you possibility to obtain some device identifiers.
@@ -663,26 +625,6 @@ string adid = Adjust.GetAdid();
 
 **Note**: Information about the **adid** is available after an app installation has been tracked by the Adjust backend. From that moment on, the Adjust SDK has information about the device **adid** and you can access it with this method. So, **it is not possible** to access the **adid** value before the SDK has been initialized and installation of your app has been tracked successfully.
 
-### <a id="user-attribution"></a>User attribution
-
-This callback is triggered as described in the [attribution callback section](#attribution-callback). It provides information about new attributions whenever there is a change. In case you want to access information about your user's current attribution whenever you need it, you can make a call to the following method of the `Adjust` instance:
-
-```cs
-AdjustAttribution attribution = Adjust.GetAttribution();
-```
-
-**Note**: You can only make this call in the Adjust SDK v4.12.0 and above.
-
-**Note**: Information about a current attribution is available after app installation has been tracked by the Adjust backend and an attribution callback has been triggered. From that moment on, the Adjust SDK has information about your user's attribution status and you can access it with this method. So, **it is not possible** to access a user's attribution value before the SDK has been initialized and an attribution callback has been triggered.
-
-### <a id="push-token"></a>Push token
-
-To send us the push notification token, add the following call to Adjust once you have obtained your token or whenever its value is changed:
-
-```cs
-Adjust.SetPushToken(pushNotificationsToken);
-```
-
 ### <a id="pre-installed-trackers"></a>Pre-installed trackers
 
 If you want to use the Adjust SDK to recognize users whose devices came with your app preinstalled, follow these steps.
@@ -706,6 +648,67 @@ If you want to use the Adjust SDK to recognize users whose devices came with you
     ```
     Default tracker: 'abc123'
     ```
+    
+### <a id="background-tracking"></a>Background tracking
+
+The default behavior of the Adjust SDK is to pause sending HTTP requests while the app is in the background. You can change this in your `AdjustConfig` instance:
+
+```cs
+var config = new AdjustConfig(appToken, environment,
+    msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
+
+config.SendInBackground = true;
+
+Adjust.ApplicationLaunching(config);
+```
+
+### <a id="event-buffering"></a>Event buffering
+
+If your app makes heavy use of event tracking, you might want to delay some HTTP requests in order to send them in one batch every minute. You can enable event buffering with your `AdjustConfig` instance:
+
+```cs
+var config = new AdjustConfig(appToken, environment,
+    msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
+
+config.EventBufferingEnabled = true;
+
+Adjust.ApplicationLaunching(config);
+```
+
+### <a id="offline-mode"></a>Offline mode
+
+You can put the Adjust SDK in offline mode to suspend transmission to our servers, while retaining tracked data to be sent later. While in offline mode, all information is saved in a file, so be careful not to trigger too many events while in offline mode.
+
+You can activate offline mode by calling `SetOfflineMode` with the parameter `true`.
+
+```cs
+Adjust.SetOfflineMode(true);
+```
+
+Conversely, you can deactivate offline mode by calling `SetOfflineMode` with `false`. When the Adjust SDK is put back in online mode, all saved information is sent to our servers with the correct time information.
+
+Unlike disabling tracking, this setting is **not remembered** between sessions. This means that the SDK is in online mode whenever it is started, even if the app was terminated in offline mode.
+
+
+### <a id="disable-tracking"></a>Disable tracking
+
+You can disable the Adjust SDK from tracking any activities of the current device by calling `setEnabled` with the parameter set to `false`. **This setting is remembered between sessions**.
+
+```cs
+Adjust.SetEnabled(false);
+```
+
+You can check if the Adjust SDK is currently enabled by calling the `isEnabled` function. It is always possible to activate the Adjust SDK by invoking `SetEnabled` with the `enabled` parameter set to `true`.
+
+### <a id="gdpr-forget-me"></a>GDPR right to be forgotten
+
+In accordance with article 17 of the EU's General Data Protection Regulation (GDPR), you can notify Adjust when a user has exercised their right to be forgotten. Calling the following method will instruct the Adjust SDK to communicate the user's choice to be forgotten to the Adjust backend:
+
+```cs
+Adjust.GdprForgetMe();
+```
+
+Upon receiving this information, Adjust will erase the user's data and the Adjust SDK will stop tracking the user. No requests from this device will be sent to Adjust in the future.
 
 
 [nuget]:             http://nuget.org/packages/Adjust
