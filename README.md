@@ -157,7 +157,7 @@ logLevel: LogLevel.Assert   // disable errors as well
 logLevel: LogLevel.Suppress // disable all logs
 ```
 
-### <a id="sdk-signature"></a> SDK signature
+### <a id="sdk-signature"></a>SDK signature
 
 An account manager must activate the Adjust SDK signature. Contact Adjust support (support@adjust.com) if you are interested in using this feature.
 
@@ -180,9 +180,131 @@ From the menu, select `DEBUG → Start Debugging`. After the app launches, you s
 
 ![][debug_output_window]
 
-## <a id="additional-features"></a>Additional features
-
 Once you have integrated the Adjust SDK into your project, you can take advantage of the following features.
+
+## Deep linking
+
+### <a id="deeplinking"></a>Deep linking
+
+You can set up the Adjust SDK to handle any deep links (also known as URI activation in Universal apps) used to open your app. We will only read Adjust-specific parameters. 
+
+If you are using an Adjust tracker URL with an option to deep link into your app from the URL, there is the possibility to get information about the deep link URL and its content.
+
+Hitting the URL can happen when the user has your app already installed (standard deep linking scenario) or if they don't have the app on their device (deferred deep linking scenario). In the standard deep linking scenario, the Windows platform natively offers the possibility for you to get the information about the deep link's content. The deferred deep linking scenario is something that the Windows platform doesn't support out of the box and, in this case, the Adjust SDK will offer you the means to get the information about the deep link content.
+
+### <a id="deeplinking-standard"></a>Standard deep linking scenario
+
+If a user has your app installed and you want it to launch after hitting an Adjust tracker URL with the `deep_link` parameter in it, you need to enable deep linking in your app. This is done by choosing a desired **unique scheme name** and assigning it to the specific handler method in your app, which runs once the app opens after the user has clicked on the link. This is set in the `Package.appxmanifest`, and here's how you indicate that your app handles your unique URI scheme name:
+
+
+1. In the `Solution Explorer`, double click `package.appxmanifest` to open the manifest designer
+2. Select the `Declarations` tab, and in the `Available Declarations` drop down, select `Protocol` and then click `Add`.
+3. Choose a name for the URI scheme (the name must be in all lowercase letters),
+4. Press `Ctrl+S` to save the changes to `package.appxmanifest`.
+
+![][unique_scheme_name_setup]
+
+Here, we added a protocol with the assigned unique scheme name of **myapp**;
+
+Next thing you have to set up is the `OnActivated` event handler, which handles the activated deep link event. 
+
+In your `App.xaml.cs` file, add the following:
+
+```cs
+// ...
+protected override void OnActivated(IActivatedEventArgs args)
+{
+    if (args.Kind == ActivationKind.Protocol)
+    {
+        var eventArgs = args as ProtocolActivatedEventArgs;
+        if (eventArgs != null)
+        {
+            // to get deep link URI:
+            Uri deeplink = eventArgs.Uri;
+            
+            // ...            
+        }
+    }
+    base.OnActivated(args);
+}
+// ...
+```
+
+You can find more information in the official Microsoft documentation: [URI activation handling][handle-uri-activation]
+
+With this now set, you need to use the assigned scheme name in the Adjust tracker URL's `deep_link` parameter if you want your app to launch once the tracker URL is clicked. A tracker URL without any information added to the deep link can be built to look something like this:
+
+```
+https://app.adjust.com/abc123?deep_link=adjustExample%3A%2F%2F
+```
+
+Please bear in mind that the `deep_link` parameter value in the URL **must be URL encoded**.
+
+With the app set as described above, after clicking this tracker URL. your app will launch along with `OnActivated` event handler, inside which you will automatically be provided with the information about the `deep_link` parameter content. Once this content is delivered to you, it **will not be encoded**, although it was encoded in the URL.
+
+### <a id="deeplinking-deferred"></a>Deferred deep linking scenario
+
+The deferred deep linking scenario occurs when a user clicks on the Adjust tracker URL with the `deep_link` parameter in it but does not have the app installed on the device at the time of click. After that, the user will get redirected to the  Microsoft Store to download and install your app. After opening it for the first time, the content of the `deep_link` parameter will be delivered to the app.
+
+In order to get information about the `deep_link` parameter content in a deferred deep linking scenario, you should set a delegate method (`DeeplinkResponse`) on the `AdjustConfig` object. This will get triggered once the Adjust SDK gets the information about the deep link content from the backend.
+
+```cs
+// ...
+var config = new AdjustConfig(appToken, environment,
+    msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
+
+config.DeeplinkResponse = deepLinkUri =>
+{
+    if (ShouldAdjustSdkLaunchTheDeeplink(deepLinkUri))
+    {
+        return true;
+    }
+    else
+    {
+        return false;    
+    }
+};
+
+Adjust.ApplicationLaunching(config);
+// ...
+```
+
+Once the Adjust SDK receives the information about the deep link content from the backend, it will deliver it to you through this delegate and expect the `bool` return value from you. This return value represents your decision on whether the Adjust SDK should launch the `OnActivated` event handler to which you have assigned the scheme name from the deep link (like in the [Standard deep linking scenario](#deeplinking-standard)) or not.
+
+If you return `true`, we will launch the event handler and the exact same scenario which is described in the [Standard deep linking scenario chapter](#deeplinking-standard) will happen. If you do not want the SDK to launch the `OnActivated` event handler, you can return `false` from this delegate (`DeeplinkResponse`), and, based on the deep link content, decide on your own what to do next in your app.
+
+### <a id="deeplinking-reattribution"></a>Reattribution via deep links
+
+Handling of deep links (URI activation on UAP) used to open your app is essential if you are planning to run **retargeting** or **re-engagement** campaigns with deep links. For more information on how to do that, please check our [official docs][reattribution-with-deeplinks].
+
+If you are using this feature, in order for your users to be properly reattributed, you need to make one additional call to the Adjust SDK in your app.
+
+Once you have received the deep link content information in your app, add a call to the `Adjust.AppWillOpenUrl` method. By making this call, the Adjust SDK will try to find if there is any new attribution information inside of the deep link, and, if there is any, it will be sent to the Adjust backend. If your user should be reattributed due to a click on an Adjust tracker URL with deep link content in it, you will see the [attribution callback](#attribution-callback) in your app being triggered with new attribution information for this user.
+
+The call to `Adjust.AppWillOpenUrl` should be done in the `OnActivated` method of your app, like this:
+
+```cs
+using AdjustSdk;
+
+public partial class App : Application
+{
+    protected override void OnActivated(IActivatedEventArgs args)
+    {
+        if (args.Kind == ActivationKind.Protocol)
+        {
+            var eventArgs = args as ProtocolActivatedEventArgs;
+
+            if (eventArgs != null)
+            {
+                Adjust.AppWillOpenUrl(eventArgs.Uri);
+            }
+        }
+        //...
+    }
+}
+```
+
+## Event Tracking
 
 ### <a id="custom-events-tracking"></a>Event tracking
 
@@ -576,126 +698,6 @@ If you want to use the Adjust SDK to recognize users whose devices came with you
     ```
     Default tracker: 'abc123'
     ```
-
-### <a id="deeplinking"></a>Deep linking
-
-You can set up the Adjust SDK to handle any deep links (also known as URI activation in Universal apps) used to open your app. We will only read Adjust-specific parameters. 
-
-If you are using an Adjust tracker URL with an option to deep link into your app from the URL, there is the possibility to get information about the deep link URL and its content.
-
-Hitting the URL can happen when the user has your app already installed (standard deep linking scenario) or if they don't have the app on their device (deferred deep linking scenario). In the standard deep linking scenario, the Windows platform natively offers the possibility for you to get the information about the deep link's content. The deferred deep linking scenario is something that the Windows platform doesn't support out of the box and, in this case, the Adjust SDK will offer you the means to get the information about the deep link content.
-
-### <a id="deeplinking-standard"></a>Standard deep linking scenario
-
-If a user has your app installed and you want it to launch after hitting an Adjust tracker URL with the `deep_link` parameter in it, you need to enable deep linking in your app. This is done by choosing a desired **unique scheme name** and assigning it to the specific handler method in your app, which runs once the app opens after the user has clicked on the link. This is set in the `Package.appxmanifest`, and here's how you indicate that your app handles your unique URI scheme name:
-
-
-1. In the `Solution Explorer`, double click `package.appxmanifest` to open the manifest designer
-2. Select the `Declarations` tab, and in the `Available Declarations` drop down, select `Protocol` and then click `Add`.
-3. Choose a name for the URI scheme (the name must be in all lowercase letters),
-4. Press `Ctrl+S` to save the changes to `package.appxmanifest`.
-
-![][unique_scheme_name_setup]
-
-Here, we added a protocol with the assigned unique scheme name of **myapp**;
-
-Next thing you have to set up is the `OnActivated` event handler, which handles the activated deep link event. 
-
-In your `App.xaml.cs` file, add the following:
-
-```cs
-// ...
-protected override void OnActivated(IActivatedEventArgs args)
-{
-    if (args.Kind == ActivationKind.Protocol)
-    {
-        var eventArgs = args as ProtocolActivatedEventArgs;
-        if (eventArgs != null)
-        {
-            // to get deep link URI:
-            Uri deeplink = eventArgs.Uri;
-            
-            // ...            
-        }
-    }
-    base.OnActivated(args);
-}
-// ...
-```
-
-You can find more information in the official Microsoft documentation: [URI activation handling][handle-uri-activation]
-
-With this now set, you need to use the assigned scheme name in the Adjust tracker URL's `deep_link` parameter if you want your app to launch once the tracker URL is clicked. A tracker URL without any information added to the deep link can be built to look something like this:
-
-```
-https://app.adjust.com/abc123?deep_link=adjustExample%3A%2F%2F
-```
-
-Please bear in mind that the `deep_link` parameter value in the URL **must be URL encoded**.
-
-With the app set as described above, after clicking this tracker URL. your app will launch along with `OnActivated` event handler, inside which you will automatically be provided with the information about the `deep_link` parameter content. Once this content is delivered to you, it **will not be encoded**, although it was encoded in the URL.
-
-### <a id="deeplinking-deferred"></a>Deferred deep linking scenario
-
-The deferred deep linking scenario occurs when a user clicks on the Adjust tracker URL with the `deep_link` parameter in it but does not have the app installed on the device at the time of click. After that, the user will get redirected to the  Microsoft Store to download and install your app. After opening it for the first time, the content of the `deep_link` parameter will be delivered to the app.
-
-In order to get information about the `deep_link` parameter content in a deferred deep linking scenario, you should set a delegate method (`DeeplinkResponse`) on the `AdjustConfig` object. This will get triggered once the Adjust SDK gets the information about the deep link content from the backend.
-
-```cs
-// ...
-var config = new AdjustConfig(appToken, environment,
-    msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
-
-config.DeeplinkResponse = deepLinkUri =>
-{
-    if (ShouldAdjustSdkLaunchTheDeeplink(deepLinkUri))
-    {
-        return true;
-    }
-    else
-    {
-        return false;    
-    }
-};
-
-Adjust.ApplicationLaunching(config);
-// ...
-```
-
-Once the Adjust SDK receives the information about the deep link content from the backend, it will deliver it to you through this delegate and expect the `bool` return value from you. This return value represents your decision on whether the Adjust SDK should launch the `OnActivated` event handler to which you have assigned the scheme name from the deep link (like in the [Standard deep linking scenario](#deeplinking-standard)) or not.
-
-If you return `true`, we will launch the event handler and the exact same scenario which is described in the [Standard deep linking scenario chapter](#deeplinking-standard) will happen. If you do not want the SDK to launch the `OnActivated` event handler, you can return `false` from this delegate (`DeeplinkResponse`), and, based on the deep link content, decide on your own what to do next in your app.
-
-### <a id="deeplinking-reattribution"></a>Reattribution via deep links
-
-Handling of deep links (URI activation on UAP) used to open your app is essential if you are planning to run **retargeting** or **re-engagement** campaigns with deep links. For more information on how to do that, please check our [official docs][reattribution-with-deeplinks].
-
-If you are using this feature, in order for your users to be properly reattributed, you need to make one additional call to the Adjust SDK in your app.
-
-Once you have received the deep link content information in your app, add a call to the `Adjust.AppWillOpenUrl` method. By making this call, the Adjust SDK will try to find if there is any new attribution information inside of the deep link, and, if there is any, it will be sent to the Adjust backend. If your user should be reattributed due to a click on an Adjust tracker URL with deep link content in it, you will see the [attribution callback](#attribution-callback) in your app being triggered with new attribution information for this user.
-
-The call to `Adjust.AppWillOpenUrl` should be done in the `OnActivated` method of your app, like this:
-
-```cs
-using AdjustSdk;
-
-public partial class App : Application
-{
-    protected override void OnActivated(IActivatedEventArgs args)
-    {
-        if (args.Kind == ActivationKind.Protocol)
-        {
-            var eventArgs = args as ProtocolActivatedEventArgs;
-
-            if (eventArgs != null)
-            {
-                Adjust.AppWillOpenUrl(eventArgs.Uri);
-            }
-        }
-        //...
-    }
-}
-```
 
 
 [nuget]:             http://nuget.org/packages/Adjust
