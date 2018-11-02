@@ -11,8 +11,8 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
     * [Install the Adjust package using NuGet Package Manager](#install-adjust-package)
     * [Integrate the Adjust SDK into your app](#integrate-adjust-package)
     * [Update Adjust settings](#update-adjust-settings)
-        * [App Token & Environment](#app-token-and-environment)
-        * [Adjust Logging](#adjust-logging)
+     * [App Token & Environment](#app-token-and-environment)
+     * [Adjust Logging](#adjust-logging)
     * [SDK signature](#sdk-signature)
     * [Build your app](#build-your-app)
       
