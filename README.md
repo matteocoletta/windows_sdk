@@ -348,7 +348,15 @@ event.PurchaseId = "{PurchaseId}";
 Adjust.trackEvent(event);
 ```
 
-### <a id="callback-parameters"></a>Callback parameters
+## Custom Parameters
+
+### <a id="event-parameters"></a>Event parameters
+
+In addition to the data points that Adjust collects [by default](https://partners.adjust.com/placeholders/), you can use the Adjust SDK to track and add to the events as many custom values as you need (user IDs, product IDs...). Custom parameters are only available as raw data (i.e., they won't appear in the Adjust dashboard).
+
+You should use Callback parameters for the values that you collect for your own internal use, and Partner parameters for those that you wish to share with external partners. If a value (e.g. product ID) is tracked both for internal use and to forward it to external partners, the best practice would be to track it both as callback and partner parameter.
+
+### <a id="callback-parameters"></a>Event callback parameters
 
 You can register a callback URL for the events in your [dashboard]. We will send a GET request to this URL whenever an event is tracked. You can also add callback parameters to the event by calling the `AddCallbackParameter` on the event instance before tracking it. We will then append these parameters to your specified callback URL.
 
@@ -373,7 +381,7 @@ It should be mentioned that we support a variety of placeholders, such as `{win_
 
 You can read more about using URL callbacks, including a full list of available values, in our [callbacks guide][callbacks-guide].
 
-### <a id="partner-params"></a>Partner parameters
+### <a id="partner-params"></a>Event partner parameters
 
 You can also add parameters to be transmitted to network partners that have been activated in your Adjust dashboard.
 
@@ -389,19 +397,6 @@ Adjust.TrackEvent(adjustEvent);
 ```
 
 You can read more about special partners and these integrations in our [guide to special partners][special-partners].
-
-### <a id="callback-id"></a>Callback identifier
-
-You can also add custom string identifier to each event you want to track. This identifier will later be reported in event success and/or event failure callbacks to enable you to keep track on which event was successfully tracked or not. You can set this identifier using the `CallbackId` property on your `AdjustEvent` instance:
-
-
-```cs
-var adjustEvent = new AdjustEvent("abc123");
-
-adjustEvent.CallbackId = "Your-Custom-Id";
-
-Adjust.TrackEvent(adjustEvent);
-```
 
 ### <a id="session-params"></a>Set up session parameters
 
@@ -568,6 +563,19 @@ If any value is unavailable, it will default to `null`.
 And both event and session failed objects also contain:
 
 - `bool WillRetry` indicates that will be an attempt to resend the package at a later time.
+
+### <a id="callback-id"></a>Callback identifier
+
+You can also add custom string identifier to each event you want to track. This identifier will later be reported in event success and/or event failure callbacks to enable you to keep track on which event was successfully tracked or not. You can set this identifier using the `CallbackId` property on your `AdjustEvent` instance:
+
+
+```cs
+var adjustEvent = new AdjustEvent("abc123");
+
+adjustEvent.CallbackId = "Your-Custom-Id";
+
+Adjust.TrackEvent(adjustEvent);
+```
 
 ### <a id="disable-tracking"></a>Disable tracking
 
